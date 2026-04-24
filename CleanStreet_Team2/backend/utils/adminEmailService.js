@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { getAdminClientUrl } = require('./config');
 
 // Create reusable transporter
 const createTransporter = () => {
@@ -9,11 +10,15 @@ const createTransporter = () => {
     return null;
   }
   
+  if (!process.env.EMAIL_USERNAME || !process.env.EMAIL_PASSWORD) {
+    return null;
+  }
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USERNAME || 'no-reply@cleanstreet.com',
-      pass: process.env.EMAIL_PASSWORD || 'dummy_password'
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD
     }
   });
 };
@@ -29,7 +34,7 @@ exports.sendAdminPasswordResetEmail = async (admin, resetUrl) => {
     }
 
     const message = {
-      from: `"CleanStreet Admin" <${process.env.EMAIL_USERNAME}>`,
+      from: process.env.EMAIL_FROM || `"CleanStreet Admin" <${process.env.EMAIL_USERNAME}>`,
       to: admin.email,
       subject: 'Admin Password Reset Request',
       html: `
@@ -92,7 +97,7 @@ exports.sendVolunteerAssignmentEmail = async (volunteer, complaint) => {
     }
 
     const message = {
-      from: `"CleanStreet Admin" <${process.env.EMAIL_USERNAME}>`,
+      from: process.env.EMAIL_FROM || `"CleanStreet Admin" <${process.env.EMAIL_USERNAME}>`,
       to: volunteer.email,
       subject: 'New Complaint Assigned to You',
       html: `
@@ -135,7 +140,7 @@ exports.sendVolunteerAssignmentEmail = async (volunteer, complaint) => {
 
               <p>Please log in to your volunteer dashboard to view full details and update the status:</p>
               <p style="text-align: center;">
-                <a href="http://localhost:3001/volunteer/login" class="button">Go to Dashboard</a>
+                <a href="${getAdminClientUrl()}/volunteer/login" class="button">Go to Dashboard</a>
               </p>
               
               <hr style="border: 1px solid #e5e7eb; margin: 20px 0;">
@@ -170,7 +175,7 @@ exports.sendVolunteerApprovalEmail = async (volunteer) => {
     }
 
     const message = {
-      from: `"CleanStreet Admin" <${process.env.EMAIL_USERNAME}>`,
+      from: process.env.EMAIL_FROM || `"CleanStreet Admin" <${process.env.EMAIL_USERNAME}>`,
       to: volunteer.email,
       subject: 'Your Volunteer Application has been Approved',
       html: `
@@ -196,7 +201,7 @@ exports.sendVolunteerApprovalEmail = async (volunteer) => {
               <p>Congratulations! Your volunteer application has been approved by the admin.</p>
               <p>You can now log in to your volunteer dashboard and start helping to keep our streets clean!</p>
               <p style="text-align: center;">
-                <a href="http://localhost:3001/volunteer/login" class="button">Login Now</a>
+                <a href="${getAdminClientUrl()}/volunteer/login" class="button">Login Now</a>
               </p>
               <p>Use your registered email and password to access your dashboard.</p>
               <hr style="border: 1px solid #e5e7eb; margin: 20px 0;">
@@ -231,7 +236,7 @@ exports.sendVolunteerPasswordResetEmail = async (volunteer, resetUrl) => {
     }
 
     const message = {
-      from: `"CleanStreet" <${process.env.EMAIL_USERNAME}>`,
+      from: process.env.EMAIL_FROM || `"CleanStreet" <${process.env.EMAIL_USERNAME}>`,
       to: volunteer.email,
       subject: 'Volunteer Password Reset Request',
       html: `

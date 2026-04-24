@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Admin = require('../models/Admin');
 const { protectAdmin, getSignedJwtToken } = require('../middleware/adminAuth');
 const { sendAdminPasswordResetEmail, generateResetToken } = require('../utils/adminEmailService');
+const { getAdminClientUrl } = require('../utils/config');
 
 // @route   POST /api/admin/auth/login
 // @desc    Login admin
@@ -178,7 +179,7 @@ router.post('/forgot-password', async (req, res) => {
     await admin.save({ validateBeforeSave: false });
 
     // Create reset url
-    const resetUrl = `http://localhost:3001/admin/reset-password/${resetToken}`;
+    const resetUrl = `${getAdminClientUrl()}/admin/reset-password/${resetToken}`;
 
     // Send email
     const emailSent = await sendAdminPasswordResetEmail(admin, resetUrl);

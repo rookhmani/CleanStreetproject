@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { adminComplaintsAPI } from '../../services/adminApi';
@@ -13,11 +13,7 @@ const AdminComplaintDetail = ({ user, setIsAuthenticated, setUser }) => {
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
 
-  useEffect(() => {
-    fetchComplaintDetails();
-  }, [id]);
-
-  const fetchComplaintDetails = async () => {
+  const fetchComplaintDetails = useCallback(async () => {
     try {
       const data = await adminComplaintsAPI.getById(id);
       setComplaint(data.complaint || data);
@@ -26,7 +22,11 @@ const AdminComplaintDetail = ({ user, setIsAuthenticated, setUser }) => {
       toast.error('Failed to fetch complaint details');
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchComplaintDetails();
+  }, [fetchComplaintDetails]);
 
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm('Are you sure you want to delete this comment?')) {

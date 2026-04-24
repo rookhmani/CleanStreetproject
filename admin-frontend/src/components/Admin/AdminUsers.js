@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { adminUsersAPI } from '../../services/adminApi';
@@ -12,11 +12,7 @@ const AdminUsers = ({ user, setIsAuthenticated, setUser }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const data = await adminUsersAPI.getAll();
       setUsers(data.users || []);
@@ -28,7 +24,11 @@ const AdminUsers = ({ user, setIsAuthenticated, setUser }) => {
       }
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleBlockToggle = async (userId, currentStatus) => {
     const action = currentStatus ? 'unblock' : 'block';

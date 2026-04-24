@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { adminComplaintsAPI, adminVolunteersAPI } from '../../services/adminApi';
@@ -22,11 +22,6 @@ const AdminComplaints = ({ user, setIsAuthenticated, setUser }) => {
     search: ''
   });
 
-  useEffect(() => {
-    fetchComplaints();
-    fetchVolunteers();
-  }, []);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,7 +36,7 @@ const AdminComplaints = ({ user, setIsAuthenticated, setUser }) => {
     };
   }, [showReportOptions]);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     try {
       const data = await adminComplaintsAPI.getAll();
       setComplaints(data.complaints || []);
@@ -53,16 +48,21 @@ const AdminComplaints = ({ user, setIsAuthenticated, setUser }) => {
       }
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  const fetchVolunteers = async () => {
+  const fetchVolunteers = useCallback(async () => {
     try {
       const data = await adminVolunteersAPI.getAll();
       setVolunteers((data.volunteers || []).filter(v => v.status === 'approved'));
     } catch (error) {
       console.error('Failed to fetch volunteers:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchComplaints();
+    fetchVolunteers();
+  }, [fetchComplaints, fetchVolunteers]);
 
   const handleStatusChange = async (complaintId, newStatus) => {
     try {

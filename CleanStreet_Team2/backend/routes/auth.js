@@ -7,6 +7,9 @@ const crypto = require('crypto');
 const { sendPasswordResetEmail } = require('../utils/emailService');
 const jwt = require("jsonwebtoken");
 
+const bcrypt = require("bcryptjs");
+const Volunteer = require("../models/Volunteer");
+
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
@@ -43,13 +46,15 @@ router.post('/register', [
       city: city || ''
     });
 
-    const token = generateToken(user._id);
+const token = generateToken(user._id);
 
-    res.status(201).json({
-      success: true,
-      token,
-      user
-    });
+const { password: _, ...safeUser } = user._doc;
+
+res.status(201).json({
+  success: true,
+  token,
+  user: safeUser
+});
 
   } catch (error) {
     console.error('Register error:', error);
@@ -89,11 +94,13 @@ router.post('/login', [
 
     const token = generateToken(user._id);
 
-    res.status(200).json({
-      success: true,
-      token,
-      user
-    });
+    const { password: _, ...safeUser } = user._doc;
+
+res.status(200).json({
+  success: true,
+  token,
+  user: safeUser
+});
 
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -105,7 +112,7 @@ router.post('/login', [
 // @access  Private
 router.get('/me', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select("-password");
 
     res.status(200).json({
       success: true,
@@ -176,12 +183,120 @@ router.post("/google-login", async (req, res) => {
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
-    return res.json({ success: true, message: "Google login success", token, user });
+    const { password: _, ...safeUser } = user._doc;
 
+return res.json({
+  success: true,
+  message: "Google login success",
+  token,
+  user: safeUser
+});
   } catch (error) {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
 /* ✅ EXPORT ✅ */
+
+// ================= VOLUNTEER REGISTER =================
+router.post("/volunteer/register", async (req, res) => {
+  try {
+
+    const { email, password, phoneNumber, address } = req.body;
+
+    // generate name automatically if frontend doesn't send it
+    const name = email.split("@")[0];
+
+    const existingVolunteer = await Volunteer.findOne({ email });
+
+    if (existingVolunteer) {
+      return res.status(400).json({
+        success: false,
+        message: "Volunteer already exists"
+      });
+    }
+
+    const volunteer = await Volunteer.create({
+      name,
+      email,
+      password,
+      phone: phoneNumber,
+      address
+    });
+
+    const token = jwt.sign(
+      { id: volunteer._id, role: "volunteer" },
+      process.env.JWT_SECRET
+    );
+
+    res.status(201).json({
+      success: true,
+      token,
+      volunteer
+    });
+
+  } catch (error) {
+
+    console.error("Volunteer register error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Volunteer registration failed"
+    });
+  }
+});
+
+// ================= VOLUNTEER LOGIN =================
+router.post("/volunteer/login", async (req, res) => {
+  try {
+
+    const { email, password } = req.body;
+
+    const volunteer = await Volunteer.findOne({ email }).select("+password");
+
+    if (!volunteer) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
+    const isMatch = await volunteer.matchPassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password"
+      });
+    }
+
+    // if (volunteer.status !== "approved") {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Account pending admin approval"
+    //   });
+    // }
+
+    const token = jwt.sign(
+      { id: volunteer._id, role: "volunteer" },
+      process.env.JWT_SECRET
+    );
+
+    res.json({
+      success: true,
+      token,
+      volunteer
+    });
+
+  } catch (error) {
+
+    console.error("Volunteer login error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Volunteer login failed"
+    });
+
+  }
+});
 module.exports = router;

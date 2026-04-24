@@ -2,6 +2,7 @@ import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";   // ✅ Correct import
 import axios from "axios";
+import { API_URL } from "../services/api";
 
 function GoogleButton({ onLoginSuccess }) {
   return (
@@ -12,7 +13,7 @@ function GoogleButton({ onLoginSuccess }) {
           const email = decoded.email;
 
           // ✅ Send email to backend
-          const res = await axios.post("http://localhost:5000/api/auth/google-login", { email });
+          const res = await axios.post(`${API_URL}/auth/google-login`, { email });
 
           if (res.data.success) {
             // ✅ Save token

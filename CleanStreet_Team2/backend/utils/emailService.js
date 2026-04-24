@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { getClientUrl } = require('./config');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -9,11 +10,16 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendPasswordResetEmail = async (email, resetToken) => {
+    if (!process.env.EMAIL_USERNAME || !process.env.EMAIL_PASSWORD) {
+        console.log('Email service not configured - skipping password reset email');
+        return;
+    }
+
     // Frontend URL where user will reset password
-    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+    const resetUrl = `${getClientUrl()}/reset-password/${resetToken}`;
 
     const mailOptions = {
-        from: process.env.EMAIL_USERNAME,
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USERNAME,
         to: email,
         subject: 'Password Reset Request',
         html: `

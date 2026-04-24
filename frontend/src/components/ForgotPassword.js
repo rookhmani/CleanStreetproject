@@ -16,7 +16,7 @@ function ForgotPassword() {
         setError('');
 
         try {
-            const response = await authAPI.forgotPassword({ email });
+            await authAPI.forgotPassword({ email });
             setMessage('Password reset link has been sent to your email');
         } catch (err) {
             setError(err.response?.data?.message || 'Error processing request');

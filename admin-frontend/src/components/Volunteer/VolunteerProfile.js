@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { volunteerAuthAPI } from '../../services/adminApi';
 import VolunteerNavbar from './VolunteerNavbar';
 import './VolunteerProfile.css';
 
@@ -17,11 +16,7 @@ const VolunteerProfile = ({ setIsAuthenticated, setUser }) => {
     address: ''
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const volunteerData = JSON.parse(localStorage.getItem('volunteer'));
       if (!volunteerData) {
@@ -41,7 +36,11 @@ const VolunteerProfile = ({ setIsAuthenticated, setUser }) => {
       toast.error('Failed to load profile');
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleChange = (e) => {
     setFormData({

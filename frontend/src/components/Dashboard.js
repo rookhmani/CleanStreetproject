@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { complaintsAPI, usersAPI, removeAuthToken } from '../services/api';
+import { Link } from 'react-router-dom';
+import { complaintsAPI, usersAPI } from '../services/api';
 import './Dashboard.css';
 
-function Dashboard({ user, setIsAuthenticated, setUser }) {
-  const navigate = useNavigate();
+function Dashboard() {
   const [stats, setStats] = useState({
     totalIssues: 0,
     pending: 0,
@@ -104,13 +103,6 @@ function Dashboard({ user, setIsAuthenticated, setUser }) {
     if (interval > 1) return Math.floor(interval) + ' minutes ago';
     
     return 'Just now';
-  };
-
-  const handleLogout = () => {
-    removeAuthToken();
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate('/login');
   };
 
   if (loading) {

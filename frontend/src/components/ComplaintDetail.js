@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { complaintsAPI, votesAPI, commentsAPI } from '../services/api';
@@ -30,13 +30,7 @@ function ComplaintDetail() {
   const [commentsError, setCommentsError] = useState('');
   const [userLikes, setUserLikes] = useState({});
 
-  useEffect(() => {
-    fetchComplaintDetails();
-    fetchUserVote();
-    fetchComments();
-  }, [id]);
-
-  const fetchComplaintDetails = async () => {
+  const fetchComplaintDetails = useCallback(async () => {
     try {
       const response = await complaintsAPI.getById(id);
       if (response.data.success) {
@@ -57,9 +51,9 @@ function ComplaintDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchUserVote = async () => {
+  const fetchUserVote = useCallback(async () => {
     try {
       const response = await votesAPI.getUserVote(id);
       if (response.data.success && response.data.vote) {
@@ -69,7 +63,7 @@ function ComplaintDetail() {
       // User hasn't voted yet
       setUserVote(null);
     }
-  };
+  }, [id]);
 
   const handleVote = async (voteType) => {
     try {
@@ -139,7 +133,7 @@ function ComplaintDetail() {
     return commentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const response = await commentsAPI.getByComplaint(id);
       if (response.data.success) {
@@ -156,7 +150,13 @@ function ComplaintDetail() {
     } catch (err) {
       console.error('Error fetching comments:', err);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchComplaintDetails();
+    fetchUserVote();
+    fetchComments();
+  }, [fetchComplaintDetails, fetchUserVote, fetchComments]);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();

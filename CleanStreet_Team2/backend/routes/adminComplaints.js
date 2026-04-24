@@ -43,7 +43,7 @@ router.get('/', protectAdmin, async (req, res) => {
 // @route   GET /api/admin/complaints/:id
 // @desc    Get single complaint by ID
 // @access  Private/Admin
-router.get('/:id', protectAdmin, async (req, res) => {
+router.get('/:id([0-9a-fA-F]{24})', protectAdmin, async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
       .populate('user_id', 'name email phone')

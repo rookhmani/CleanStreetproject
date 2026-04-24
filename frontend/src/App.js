@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { GoogleOAuthProvider } from "@react-oauth/google";   // ✅ ADDED
 
 import Login from './components/Login';
 import Register from './components/Register';
@@ -87,8 +86,6 @@ function App() {
 
   return (
     // ✅ Google Provider ADDED HERE
-    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
-
       <Router>
         <AppContent 
           isAuthenticated={isAuthenticated}
@@ -97,7 +94,6 @@ function App() {
           setUser={setUser}
         />
       </Router>
-    </GoogleOAuthProvider>
   );
 }
 

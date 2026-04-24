@@ -1,7 +1,20 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
+
+const API_ORIGIN = (
+  process.env.REACT_APP_FILE_BASE_URL ||
+  (process.env.REACT_APP_API_URL || '').replace(/\/api\/?$/, '') ||
+  'http://localhost:5000'
+).replace(/\/$/, '');
+
+const resolveFileUrl = (url) => {
+  if (!url || url.startsWith('http')) {
+    return url;
+  }
+
+  return `${API_ORIGIN}${url.startsWith('/') ? url : `/${url}`}`;
+};
 
 // Format date for reports
 const formatDate = (date) => {
@@ -62,29 +75,32 @@ export const generateExcelReport = (complaints) => {
     'Downvotes': complaint.downvotes || 0
   }));
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Complaints');
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
-  // Auto-size columns
-  const maxWidth = data.reduce((w, r) => Math.max(w, r['Description']?.length || 0), 10);
-  worksheet['!cols'] = [
-    { wch: 25 }, // ID
-    { wch: 30 }, // Title
-    { wch: Math.min(maxWidth, 50) }, // Description
-    { wch: 15 }, // Status
-    { wch: 10 }, // Priority
-    { wch: 20 }, // Reported By
-    { wch: 25 }, // Email
-    { wch: 20 }, // Assigned To
-    { wch: 40 }, // Address
-    { wch: 15 }, // Created
-    { wch: 15 }, // Updated
-    { wch: 10 }, // Upvotes
-    { wch: 10 }  // Downvotes
-  ];
-
-  XLSX.writeFile(workbook, `complaints_report_${Date.now()}.xlsx`);
+  const headers = Object.keys(data[0] || {});
+  const rows = data.map((row) =>
+    `<tr>${headers.map((header) => `<td>${escapeHtml(row[header])}</td>`).join('')}</tr>`
+  ).join('');
+  const headerRow = `<tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>`;
+  const workbook = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head><meta charset="UTF-8"></head>
+      <body><table>${headerRow}${rows}</table></body>
+    </html>
+  `;
+  const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `complaints_report_${Date.now()}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 };
 
 // Generate PDF Report for All Complaints
@@ -298,9 +314,7 @@ export const generateDetailedComplaintPDF = async (complaint, comments = []) => 
 
       try {
         // Handle different URL formats
-        if (!imageUrl.startsWith('http')) {
-          imageUrl = `http://localhost:5001${imageUrl}`;
-        }
+        imageUrl = resolveFileUrl(imageUrl);
 
         // Load image using proxy to avoid CORS
         const img = await loadImageWithProxy(imageUrl);
@@ -417,22 +431,9 @@ const loadImageWithProxy = (url) => {
     img.crossOrigin = 'anonymous';
     
     // Handle different URL formats
-    let imageUrl = url;
-    if (url.startsWith('/uploads/')) {
-      imageUrl = `http://localhost:5001${url}`;
-    }
+    let imageUrl = resolveFileUrl(url);
     
     img.src = imageUrl;
   });
 };
 
-// Helper function to load image
-const loadImage = (url) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
-  });
-};

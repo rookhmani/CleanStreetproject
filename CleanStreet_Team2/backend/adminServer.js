@@ -5,6 +5,8 @@ const dotenv = require('dotenv');
 
 // Load env vars
 dotenv.config();
+const { corsOptions, validateRequiredEnv } = require('./utils/config');
+validateRequiredEnv();
 
 // Initialize app
 const app = express();
@@ -27,10 +29,7 @@ app.use((err, req, res, next) => {
 });
 
 // CORS middleware
-app.use(cors({
-  origin: ['http://localhost:3001', 'http://localhost:3000'],
-  credentials: true
-}));
+app.use(cors(corsOptions));
 
 // Serve static files from uploads directory with CORS headers
 app.use('/uploads', (req, res, next) => {
@@ -110,7 +109,7 @@ const PORT = process.env.ADMIN_PORT || 5001;
 
 app.listen(PORT, () => {
   console.log('🚀 Admin Server running on port', PORT);
-  console.log('📍 Admin API available at http://localhost:' + PORT + '/api');
+  console.log('📍 Admin API listening on port ' + PORT);
   console.log('='.repeat(50));
 });
 

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authAPI, removeAuthToken } from '../services/api';
 import LocationPicker from './LocationPicker';
 import './Profile.css';
 
-function Profile({ user, setIsAuthenticated, setUser }) {
-  const navigate = useNavigate();
+function Profile({ user }) {
   const [profileData, setProfileData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -31,13 +28,6 @@ function Profile({ user, setIsAuthenticated, setUser }) {
       });
     }
   }, [user]);
-
-  const handleLogout = () => {
-    removeAuthToken();
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate('/login');
-  };
 
   const getInitials = () => {
     if (profileData.name) {

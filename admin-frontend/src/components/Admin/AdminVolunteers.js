@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { adminVolunteersAPI } from '../../services/adminApi';
@@ -19,11 +19,7 @@ const AdminVolunteers = ({ user, setIsAuthenticated, setUser }) => {
     address: ''
   });
 
-  useEffect(() => {
-    fetchVolunteers();
-  }, []);
-
-  const fetchVolunteers = async () => {
+  const fetchVolunteers = useCallback(async () => {
     try {
       const data = await adminVolunteersAPI.getAll();
       setVolunteers(data.volunteers || []);
@@ -35,7 +31,11 @@ const AdminVolunteers = ({ user, setIsAuthenticated, setUser }) => {
       }
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchVolunteers();
+  }, [fetchVolunteers]);
 
   const handleApprove = async (volunteerId) => {
     try {

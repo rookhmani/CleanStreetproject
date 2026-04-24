@@ -32,27 +32,39 @@ function App() {
   const [adminUser, setAdminUser] = useState(null);
   const [volunteerUser, setVolunteerUser] = useState(null);
 
-  useEffect(() => {
-    // Check if admin is logged in
+ useEffect(() => {
+  try {
+    // Check admin login
     const adminToken = getAdminToken();
     if (adminToken) {
       setIsAdminAuthenticated(true);
-      const storedAdmin = localStorage.getItem('adminUser');
-      if (storedAdmin) {
+
+      const storedAdmin = localStorage.getItem("adminUser");
+      if (storedAdmin && storedAdmin !== "undefined") {
         setAdminUser(JSON.parse(storedAdmin));
       }
     }
 
-    // Check if volunteer is logged in
+    // Check volunteer login
     const volunteerToken = getVolunteerToken();
     if (volunteerToken) {
       setIsVolunteerAuthenticated(true);
-      const storedVolunteer = localStorage.getItem('volunteer');
-      if (storedVolunteer) {
+
+      const storedVolunteer = localStorage.getItem("volunteer");
+      if (storedVolunteer && storedVolunteer !== "undefined") {
         setVolunteerUser(JSON.parse(storedVolunteer));
       }
     }
-  }, []);
+
+  } catch (error) {
+    console.error("LocalStorage parsing error:", error);
+
+    localStorage.removeItem("adminUser");
+    localStorage.removeItem("volunteer");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("volunteer_token");
+  }
+}, []);
 
   return (
     <Router>

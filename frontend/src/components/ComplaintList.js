@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { complaintsAPI, votesAPI } from '../services/api';
 import './ComplaintList.css';
@@ -11,11 +11,22 @@ function ComplaintList() {
   const [filter, setFilter] = useState({ status: 'all', type: 'all' });
   const [userVotes, setUserVotes] = useState({});
 
-  useEffect(() => {
-    fetchComplaints();
+  const fetchUserVotes = useCallback(async (complaints) => {
+    const votes = {};
+    for (const complaint of complaints) {
+      try {
+        const response = await votesAPI.getUserVote(complaint._id);
+        if (response.data.vote) {
+          votes[complaint._id] = response.data.vote.vote_type;
+        }
+      } catch (err) {
+        console.error('Error fetching vote for complaint:', complaint._id);
+      }
+    }
+    setUserVotes(votes);
   }, []);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     try {
       setLoading(true);
       const response = await complaintsAPI.getAll();
@@ -30,22 +41,11 @@ function ComplaintList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchUserVotes]);
 
-  const fetchUserVotes = async (complaints) => {
-    const votes = {};
-    for (const complaint of complaints) {
-      try {
-        const response = await votesAPI.getUserVote(complaint._id);
-        if (response.data.vote) {
-          votes[complaint._id] = response.data.vote.vote_type;
-        }
-      } catch (err) {
-        console.error('Error fetching vote for complaint:', complaint._id);
-      }
-    }
-    setUserVotes(votes);
-  };
+  useEffect(() => {
+    fetchComplaints();
+  }, [fetchComplaints]);
 
   const handleVote = async (complaintId, voteType) => {
     try {

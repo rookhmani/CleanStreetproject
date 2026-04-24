@@ -3,7 +3,7 @@ import axios from "axios";
 /**
  * ================= BASE CONFIG =================
  */
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
 
 const adminApi = axios.create({
   baseURL: BASE_URL,
@@ -65,17 +65,37 @@ export const removeVolunteerToken = () => {
  */
 export const adminAuthAPI = {
   login: async (data) => {
-    const res = await adminApi.post("/auth/admin/login", data);
+    const res = await adminApi.post("/admin/auth/login", data);
     return res.data;
   },
 
   register: async (data) => {
-    const res = await adminApi.post("/auth/admin/register", data);
+    const res = await adminApi.post("/admin/auth/register", data);
+    return res.data;
+  },
+
+  createAdmin: async (data) => {
+    const res = await adminApi.post("/admin/auth/register", data);
     return res.data;
   },
 
   getMe: async () => {
-    const res = await adminApi.get("/auth/admin/me");
+    const res = await adminApi.get("/admin/auth/me");
+    return res.data;
+  },
+
+  getAdmins: async () => {
+    const res = await adminApi.get("/admin/auth/admins");
+    return res.data;
+  },
+
+  forgotPassword: async (email) => {
+    const res = await adminApi.post("/admin/auth/forgot-password", { email });
+    return res.data;
+  },
+
+  resetPassword: async (token, password) => {
+    const res = await adminApi.put(`/admin/auth/reset-password/${token}`, { password });
     return res.data;
   },
 };
@@ -85,17 +105,27 @@ export const adminAuthAPI = {
  */
 export const volunteerAuthAPI = {
   register: async (data) => {
-    const res = await adminApi.post("/auth/volunteer/register", data);
+    const res = await adminApi.post("/admin/volunteers/register", data);
     return res.data;
   },
 
   login: async (data) => {
-    const res = await adminApi.post("/auth/volunteer/login", data);
+    const res = await adminApi.post("/admin/volunteers/login", data);
     return res.data;
   },
 
   getMe: async () => {
-    const res = await adminApi.get("/auth/volunteer/me");
+    const res = await adminApi.get("/admin/volunteers/me");
+    return res.data;
+  },
+
+  forgotPassword: async (email) => {
+    const res = await adminApi.post("/admin/volunteers/forgot-password", { email });
+    return res.data;
+  },
+
+  resetPassword: async (token, password) => {
+    const res = await adminApi.put(`/admin/volunteers/reset-password/${token}`, { password });
     return res.data;
   },
 };
@@ -105,24 +135,44 @@ export const volunteerAuthAPI = {
  */
 export const adminComplaintsAPI = {
   getAll: async (params) => {
-    const res = await adminApi.get("/complaints", { params });
+    const res = await adminApi.get("/admin/complaints", { params });
     return res.data;
   },
 
   getById: async (id) => {
-    const res = await adminApi.get(`/complaints/${id}`);
+    const res = await adminApi.get(`/admin/complaints/${id}`);
     return res.data;
   },
 
   updateStatus: async (id, status) => {
-    const res = await adminApi.put(`/complaints/${id}/status`, { status });
+    const res = await adminApi.put(`/admin/complaints/${id}/status`, { status });
     return res.data;
   },
 
   assignToVolunteer: async (id, volunteerId) => {
-    const res = await adminApi.put(`/complaints/${id}/assign`, {
+    const res = await adminApi.put(`/admin/complaints/${id}/assign`, {
       volunteerId,
     });
+    return res.data;
+  },
+
+  unassign: async (id) => {
+    const res = await adminApi.put(`/admin/complaints/${id}/unassign`);
+    return res.data;
+  },
+
+  deleteComplaint: async (id) => {
+    const res = await adminApi.delete(`/admin/complaints/${id}`);
+    return res.data;
+  },
+
+  deleteComment: async (complaintId, commentId) => {
+    const res = await adminApi.delete(`/admin/complaints/${complaintId}/comments/${commentId}`);
+    return res.data;
+  },
+
+  getDashboardStats: async () => {
+    const res = await adminApi.get("/admin/complaints/stats/dashboard");
     return res.data;
   },
 };
@@ -143,17 +193,12 @@ export const volunteerComplaintsAPI = {
   },
 
   updateStatus: async (id, status) => {
-    const res = await adminApi.put(
-      `/volunteer/complaints/${id}/status`,
-      { status }
-    );
+    const res = await adminApi.put(`/volunteer/complaints/${id}/status`, { status });
     return res.data;
   },
 
   getDashboardStats: async () => {
-    const res = await adminApi.get(
-      "/volunteer/complaints/stats/dashboard"
-    );
+    const res = await adminApi.get("/volunteer/complaints/stats/dashboard");
     return res.data;
   },
 };
@@ -163,22 +208,32 @@ export const volunteerComplaintsAPI = {
  */
 export const adminVolunteersAPI = {
   getAll: async () => {
-    const res = await adminApi.get("/volunteers");
+    const res = await adminApi.get("/admin/volunteers");
+    return res.data;
+  },
+
+  getById: async (id) => {
+    const res = await adminApi.get(`/admin/volunteers/${id}`);
+    return res.data;
+  },
+
+  createVolunteer: async (data) => {
+    const res = await adminApi.post("/admin/volunteers", data);
     return res.data;
   },
 
   approve: async (id) => {
-    const res = await adminApi.put(`/volunteers/${id}/approve`);
+    const res = await adminApi.put(`/admin/volunteers/${id}/approve`);
     return res.data;
   },
 
   block: async (id) => {
-    const res = await adminApi.put(`/volunteers/${id}/block`);
+    const res = await adminApi.put(`/admin/volunteers/${id}/block`);
     return res.data;
   },
 
   delete: async (id) => {
-    const res = await adminApi.delete(`/volunteers/${id}`);
+    const res = await adminApi.delete(`/admin/volunteers/${id}`);
     return res.data;
   },
 };
@@ -188,17 +243,22 @@ export const adminVolunteersAPI = {
  */
 export const adminUsersAPI = {
   getAll: async () => {
-    const res = await adminApi.get("/users");
+    const res = await adminApi.get("/admin/users");
+    return res.data;
+  },
+
+  getById: async (id) => {
+    const res = await adminApi.get(`/admin/users/${id}`);
     return res.data;
   },
 
   block: async (id) => {
-    const res = await adminApi.put(`/users/${id}/block`);
+    const res = await adminApi.put(`/admin/users/${id}/block`);
     return res.data;
   },
 
   delete: async (id) => {
-    const res = await adminApi.delete(`/users/${id}`);
+    const res = await adminApi.delete(`/admin/users/${id}`);
     return res.data;
   },
 };

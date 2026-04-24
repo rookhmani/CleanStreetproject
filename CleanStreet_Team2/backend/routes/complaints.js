@@ -74,7 +74,7 @@ router.get('/user', protect, async (req, res) => {
 // @route   GET /api/complaints/:id
 // @desc    Get single complaint by ID
 // @access  Private
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id([0-9a-fA-F]{24})', protect, async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
       .populate('user_id', 'name email');

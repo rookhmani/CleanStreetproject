@@ -16,11 +16,11 @@ const AdminSettings = ({ user, setIsAuthenticated, setUser }) => {
     password: ''
   });
 
-  useEffect(() => {
-    const admin = JSON.parse(localStorage.getItem('admin'));
-    setCurrentAdmin(admin);
-    fetchAdmins();
-  }, []);
+useEffect(() => {
+  const admin = JSON.parse(localStorage.getItem("adminUser") || "null");
+  setCurrentAdmin(admin);
+  fetchAdmins();
+}, []);
 
   const fetchAdmins = async () => {
     try {

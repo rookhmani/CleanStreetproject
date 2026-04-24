@@ -5,6 +5,7 @@ const Volunteer = require('../models/Volunteer');
 const { protectAdmin } = require('../middleware/adminAuth');
 const { protectVolunteer, getSignedJwtToken } = require('../middleware/adminAuth');
 const { sendVolunteerApprovalEmail, sendVolunteerPasswordResetEmail, generateResetToken } = require('../utils/adminEmailService');
+const { getAdminClientUrl } = require('../utils/config');
 
 // @route   POST /api/admin/volunteers/register
 // @desc    Register new volunteer
@@ -53,6 +54,59 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Volunteer registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error'
+    });
+  }
+});
+
+// @route   POST /api/admin/volunteers
+// @desc    Create and approve a volunteer from the admin dashboard
+// @access  Private/Admin
+router.post('/', protectAdmin, async (req, res) => {
+  try {
+    const { name, email, password, phone, address } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name, email, and password'
+      });
+    }
+
+    const existingVolunteer = await Volunteer.findOne({ email });
+
+    if (existingVolunteer) {
+      return res.status(400).json({
+        success: false,
+        message: 'Volunteer with this email already exists'
+      });
+    }
+
+    const volunteer = await Volunteer.create({
+      name,
+      email,
+      password,
+      phone,
+      address,
+      status: 'approved',
+      approved_by: req.admin._id,
+      approved_at: Date.now()
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Volunteer created and approved successfully',
+      volunteer: {
+        id: volunteer._id,
+        name: volunteer.name,
+        email: volunteer.email,
+        status: volunteer.status
+      }
+    });
+  } catch (error) {
+    console.error('Create volunteer error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Server error'
@@ -331,7 +385,7 @@ router.post('/forgot-password', async (req, res) => {
     await volunteer.save({ validateBeforeSave: false });
 
     // Create reset url
-    const resetUrl = `http://localhost:3001/volunteer/reset-password/${resetToken}`;
+    const resetUrl = `${getAdminClientUrl()}/volunteer/reset-password/${resetToken}`;
 
     // Send email
     const emailSent = await sendVolunteerPasswordResetEmail(volunteer, resetUrl);
