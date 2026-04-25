@@ -31,6 +31,33 @@ adminApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+adminApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const message = error.response?.data?.message || "";
+    const isAuthError = error.response?.status === 401;
+    const isMissingAccount =
+      message.toLowerCase().includes("admin not found") ||
+      message.toLowerCase().includes("volunteer not found") ||
+      message.toLowerCase().includes("not authorized");
+
+    if (isAuthError && isMissingAccount) {
+      removeAdminToken();
+      removeVolunteerToken();
+      localStorage.removeItem("admin");
+      localStorage.removeItem("volunteer");
+
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = window.location.pathname.startsWith("/volunteer")
+          ? "/volunteer/login"
+          : "/admin/login";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 /**
  * ================= TOKEN HELPERS =================
  * (App.js & components REQUIRE these exports)

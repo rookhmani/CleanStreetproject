@@ -23,7 +23,14 @@ import VolunteerProfile from './components/Volunteer/VolunteerProfile';
 import VolunteerForgotPassword from './components/Volunteer/VolunteerForgotPassword';
 import VolunteerResetPassword from './components/Volunteer/VolunteerResetPassword';
 
-import { getAdminToken, getVolunteerToken } from './services/adminApi';
+import {
+  adminAuthAPI,
+  getAdminToken,
+  getVolunteerToken,
+  removeAdminToken,
+  removeVolunteerToken,
+  volunteerAuthAPI
+} from './services/adminApi';
 import './App.css';
 
 function App() {
@@ -31,28 +38,37 @@ function App() {
   const [isVolunteerAuthenticated, setIsVolunteerAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState(null);
   const [volunteerUser, setVolunteerUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
  useEffect(() => {
+  const checkAuth = async () => {
   try {
     // Check admin login
     const adminToken = getAdminToken();
     if (adminToken) {
-      setIsAdminAuthenticated(true);
-
-      const storedAdmin = localStorage.getItem("adminUser");
-      if (storedAdmin && storedAdmin !== "undefined") {
-        setAdminUser(JSON.parse(storedAdmin));
+      try {
+        const response = await adminAuthAPI.getMe();
+        const admin = response.admin || response.user;
+        setIsAdminAuthenticated(true);
+        setAdminUser(admin);
+        localStorage.setItem("adminUser", JSON.stringify(admin));
+      } catch {
+        removeAdminToken();
+        localStorage.removeItem("admin");
       }
     }
 
     // Check volunteer login
     const volunteerToken = getVolunteerToken();
     if (volunteerToken) {
-      setIsVolunteerAuthenticated(true);
-
-      const storedVolunteer = localStorage.getItem("volunteer");
-      if (storedVolunteer && storedVolunteer !== "undefined") {
-        setVolunteerUser(JSON.parse(storedVolunteer));
+      try {
+        const response = await volunteerAuthAPI.getMe();
+        const volunteer = response.volunteer || response.user;
+        setIsVolunteerAuthenticated(true);
+        setVolunteerUser(volunteer);
+        localStorage.setItem("volunteer", JSON.stringify(volunteer));
+      } catch {
+        removeVolunteerToken();
       }
     }
 
@@ -61,10 +77,19 @@ function App() {
 
     localStorage.removeItem("adminUser");
     localStorage.removeItem("volunteer");
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("volunteer_token");
+    removeAdminToken();
+    removeVolunteerToken();
+  } finally {
+    setAuthChecked(true);
   }
+  };
+
+  checkAuth();
 }, []);
+
+  if (!authChecked) {
+    return <div className="loading">Loading...</div>;
+  }
 
   return (
     <Router>

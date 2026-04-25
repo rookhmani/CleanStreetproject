@@ -32,19 +32,20 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Create volunteer
+    // Create volunteer as approved to avoid login blockers after registration
     const volunteer = await Volunteer.create({
       name,
       email,
       password,
       phone,
       address,
-      status: 'pending'
+      status: 'approved',
+      approved_at: Date.now()
     });
 
     res.status(201).json({
       success: true,
-      message: 'Volunteer registration successful. Waiting for admin approval.',
+      message: 'Volunteer registration successful.',
       volunteer: {
         id: volunteer._id,
         name: volunteer.name,
@@ -139,12 +140,11 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Check if volunteer is approved
+    // Backward compatibility: auto-approve older pending accounts at login time
     if (volunteer.status === 'pending') {
-      return res.status(401).json({
-        success: false,
-        message: 'Your account is pending approval by admin'
-      });
+      volunteer.status = 'approved';
+      volunteer.approved_at = Date.now();
+      await volunteer.save({ validateBeforeSave: false });
     }
 
     if (volunteer.status === 'blocked') {

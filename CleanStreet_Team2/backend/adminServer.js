@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const connectDatabase = require('./utils/database');
 
 // Load env vars
 dotenv.config();
@@ -40,9 +41,7 @@ app.use('/uploads', (req, res, next) => {
 }, express.static('uploads'));
 
 // Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cleanstreet';
-
-mongoose.connect(MONGODB_URI)
+connectDatabase()
 .then(() => console.log('✅ MongoDB Connected Successfully (Admin Server)'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 

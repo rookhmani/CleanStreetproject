@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 
 
 const seedAdmin = require("./utils/seedAdmin");
+const connectDatabase = require("./utils/database");
 
 // Load environment variables
 dotenv.config();
@@ -51,11 +52,7 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/cleanstreet";
-
-mongoose
-  .connect(MONGODB_URI)
+connectDatabase()
   .then(async () => {
     console.log("✅ MongoDB Connected Successfully");
 
